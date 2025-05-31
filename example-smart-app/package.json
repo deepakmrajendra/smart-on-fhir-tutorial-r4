@@ -1,18 +1,29 @@
 {
   "name": "example-smart-app",
   "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "description": "Example SMART on FHIR application demonstrating patient data access using FHIR R4",
+  "main": "src/js/example-smart-app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "SMART",
+    "FHIR",
+    "R4",
+    "healthcare",
+    "EHR"
+  ],
+  "author": "Deepak Rajendrappa",
+  "license": "MIT",
   "dependencies": {
     "fhirclient": "^2.6.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepakmrajendra/smart-on-fhir-tutorial-r4"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
