@@ -12,10 +12,10 @@
     <script>
       // Modern SMART on FHIR launch sequence
       const smartConfig = {
-        clientId: '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
-        // Cerner R4 specific scope format
-        scope: 'system/Patient.read system/Observation.read openid fhirUser launch online_access',
-        // Exact match with Cerner registration - no index.html
+        // You'll need to replace this with the new client ID after re-registration
+        clientId: '2ada2c94-6f04-44ff-8057-a1ed359a5b66',
+        // Scopes matching the new registration exactly
+        scope: 'launch profile fhirUser openid online_access patient/Patient.read patient/Patient.search patient/Observation.read patient/Observation.search',
         redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/'
       };
 
