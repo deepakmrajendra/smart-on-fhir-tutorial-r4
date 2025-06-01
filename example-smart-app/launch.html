@@ -19,9 +19,8 @@
       // Initialize SMART
       FHIR.oauth2.authorize({
         clientId: '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
-        scope: 'launch patient/*.read openid profile',
-        redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
-        fhirServiceUrl: 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d'
+        scope: 'launch profile openid patient/Patient.read patient/Observation.read',
+        redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/'
       }).catch(console.error);
     </script>
   </body>
