@@ -15,7 +15,7 @@
         clientId: '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
         // Explicit scopes as required by Cerner R4
         scope: 'launch online_access openid profile patient/Patient.read patient/Observation.read',
-        redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/index.html',
+        redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
         // Let the library handle the authorization server discovery
         iss: new URLSearchParams(window.location.search).get('iss') || 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d'
       };
