@@ -7,32 +7,22 @@
     <title>Example-SMART-App</title>
   </head>
   <body>
-
     <div class="spinner">
       <div class="bounce1"></div>
       <div class="bounce2"></div>
       <div class="bounce3"></div>
     </div>
 
-    <!-- FHIR Client from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.min.js"></script>
+    <!-- Latest FHIR Client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
     <script>
-      // Wait for the FHIR client to be loaded
-      window.onload = function() {
-        if (window.FHIR) {
-          FHIR.oauth2.authorize({
-            'client_id': '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
-            'scope': 'launch profile fhirUser openid online_access patient/Patient.R patient/Observation.R',
-            'redirectUri': 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
-            'audience': 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d',
-            'state': Math.random().toString(36).substring(7),
-            'completeInTarget': true
-          });
-        } else {
-          console.error('FHIR client not loaded');
-          document.body.innerHTML += '<p style="color: red;">Error: FHIR client failed to load</p>';
-        }
-      };
+      // Initialize SMART
+      FHIR.oauth2.authorize({
+        clientId: '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
+        scope: 'launch patient/*.read openid profile',
+        redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
+        fhirServiceUrl: 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d'
+      }).catch(console.error);
     </script>
   </body>
 </html>

@@ -1,21 +1,15 @@
 (function(window) {
   window.extractData = async function() {
     try {
-      // Get the client
+      // Get the SMART client
       const client = await FHIR.oauth2.ready();
       
-      if (client.patient) {
-        // Get patient resource
-        const patient = await client.request(`Patient/${client.patient.id}`, {
-          headers: {
-            'Accept': 'application/json+fhir'
-          }
-        });
-        
-        // Get observations using R4 syntax
-        const queryParams = new URLSearchParams();
-        queryParams.set('patient', client.patient.id);
-        queryParams.set('code', [
+      // Get patient resource
+      const patient = await client.patient.read();
+      
+      // Get observations
+      const observations = await client.patient.request(`Observation?${new URLSearchParams({
+        code: [
           'http://loinc.org|8302-2',   // Height
           'http://loinc.org|8462-4',   // Diastolic BP
           'http://loinc.org|8480-6',   // Systolic BP
@@ -27,58 +21,48 @@
           'http://loinc.org|8310-5',   // Temperature
           'http://loinc.org|8867-4',   // Heart rate
           'http://loinc.org|2339-0'    // Glucose
-        ].join(','));
+        ].join(',')
+      })}`);
+
+      // Helper function to find observations by code
+      const byCodes = (code) => {
+        if (!observations.entry || !Array.isArray(observations.entry)) return [];
+        return observations.entry
+          .filter(entry => entry.resource.code.coding
+            .some(coding => coding.code === code))
+          .map(entry => entry.resource);
+      };
+
+      const p = {
+        // Demographics
+        fname: patient.name?.[0]?.given?.join(' ') || '',
+        lname: patient.name?.[0]?.family || '',
+        gender: patient.gender || '',
+        birthdate: patient.birthDate || '',
         
-        const observations = await client.request(`Observation?${queryParams}`, {
-          headers: {
-            'Accept': 'application/json+fhir'
-          }
-        });
+        // Observations
+        height: getQuantityValueAndUnit(byCodes('8302-2')[0]),
+        weight: getQuantityValueAndUnit(byCodes('29463-7')[0]),
+        bmi: getQuantityValueAndUnit(byCodes('39156-5')[0]),
+        temperature: getQuantityValueAndUnit(byCodes('8310-5')[0]),
+        heartrate: getQuantityValueAndUnit(byCodes('8867-4')[0]),
+        glucose: getQuantityValueAndUnit(byCodes('2339-0')[0]),
+        
+        // Blood pressure requires special handling
+        ...getBloodPressureValues(byCodes('55284-4')),
+        
+        // Cholesterol
+        hdl: getQuantityValueAndUnit(byCodes('2085-9')[0]),
+        ldl: getQuantityValueAndUnit(byCodes('2089-1')[0])
+      };
 
-        // Helper function to find observations by code
-        const byCodes = (code) => {
-          if (!observations.entry) return [];
-          return observations.entry
-            .filter(entry => entry.resource.code.coding
-              .some(coding => coding.code === code))
-            .map(entry => entry.resource);
-        };
-
-        // Create the patient object with modern JS
-        const p = {
-          // Demographics
-          fname: patient.name?.[0]?.given?.join(' ') || '',
-          lname: patient.name?.[0]?.family || '',
-          gender: patient.gender || '',
-          birthdate: patient.birthDate || '',
-          
-          // Observations
-          height: getQuantityValueAndUnit(byCodes('8302-2')[0]),
-          weight: getQuantityValueAndUnit(byCodes('29463-7')[0]),
-          bmi: getQuantityValueAndUnit(byCodes('39156-5')[0]),
-          temperature: getQuantityValueAndUnit(byCodes('8310-5')[0]),
-          heartrate: getQuantityValueAndUnit(byCodes('8867-4')[0]),
-          glucose: getQuantityValueAndUnit(byCodes('2339-0')[0]),
-          
-          // Blood pressure requires special handling
-          ...getBloodPressureValues(byCodes('55284-4')),
-          
-          // Cholesterol
-          hdl: getQuantityValueAndUnit(byCodes('2085-9')[0]),
-          ldl: getQuantityValueAndUnit(byCodes('2089-1')[0])
-        };
-
-        return p;
-      } else {
-        throw new Error('Patient context not found');
-      }
+      return p;
     } catch (error) {
       console.error('Error fetching data:', error);
       throw error;
     }
   };
 
-  // Helper function to get both systolic and diastolic BP
   function getBloodPressureValues(BPObservations) {
     if (!BPObservations || !BPObservations[0]) return { systolicbp: '', diastolicbp: '' };
     
@@ -96,7 +80,6 @@
     };
   }
 
-  // Helper function to get value and unit from an observation
   function getQuantityValueAndUnit(observation) {
     const valueQuantity = observation?.valueQuantity;
     if (!valueQuantity) return '';
@@ -107,7 +90,6 @@
     return `${value} ${unit || ''}`.trim();
   }
 
-  // Visualization function remains the same since we're keeping jQuery
   window.drawVisualization = function(p) {
     $('#holder').show();
     $('#loading').hide();
