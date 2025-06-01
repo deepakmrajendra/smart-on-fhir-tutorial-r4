@@ -22,10 +22,11 @@
         if (window.FHIR) {
           FHIR.oauth2.authorize({
             'client_id': '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
-            'scope': 'launch profile fhirUser openid patient/Patient.read patient/Observation.read',
+            'scope': 'launch profile fhirUser openid online_access patient/Patient.R patient/Observation.R',
             'redirectUri': 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
-            'completeInTarget': true,
-            'iss': 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d'
+            'audience': 'https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d',
+            'state': Math.random().toString(36).substring(7),
+            'completeInTarget': true
           });
         } else {
           console.error('FHIR client not loaded');

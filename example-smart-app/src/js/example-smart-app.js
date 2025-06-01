@@ -6,7 +6,11 @@
       
       if (client.patient) {
         // Get patient resource
-        const patient = await client.request(`Patient/${client.patient.id}`);
+        const patient = await client.request(`Patient/${client.patient.id}`, {
+          headers: {
+            'Accept': 'application/json+fhir'
+          }
+        });
         
         // Get observations using R4 syntax
         const queryParams = new URLSearchParams();
@@ -25,7 +29,11 @@
           'http://loinc.org|2339-0'    // Glucose
         ].join(','));
         
-        const observations = await client.request(`Observation?${queryParams}`);
+        const observations = await client.request(`Observation?${queryParams}`, {
+          headers: {
+            'Accept': 'application/json+fhir'
+          }
+        });
 
         // Helper function to find observations by code
         const byCodes = (code) => {
