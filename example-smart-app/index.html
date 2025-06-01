@@ -1,106 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>deepakmrajendra Example-SMART-App</title>
-    <link rel='stylesheet' type='text/css' href='./src/css/example-smart-app.css'>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      .hidden { display: none; }
+      #loading { text-align: center; padding: 2em; }
+      .error { color: red; padding: 1em; }
+    </style>
   </head>
   <body>
-    <div id='errors'></div>
-    <div id="loading" class="spinner">
-      <div class="bounce1"></div>
-      <div class="bounce2"></div>
-      <div class="bounce3"></div>
-    </div>
-    <div id='holder' >
-      <h2>Example-SMART-App</h2>
+    <div class="container mt-4">
+      <div id="loading">Loading patient data...</div>
+      <div id="errors" class="error hidden"></div>
+      <div id="patient-data" class="hidden">
+        <h2>Patient Information</h2>
+        <div class="card mb-4">
+          <div class="card-body">
+            <h3 class="card-title">Demographics</h3>
+            <p>Name: <span id="name"></span></p>
+            <p>Gender: <span id="gender"></span></p>
+            <p>Date of Birth: <span id="dob"></span></p>
+          </div>
+        </div>
 
-      <h2>Patient Resource</h2>
-      <table>
-        <tr>
-          <th>First Name:</th>
-          <td id='fname'></td>
-        </tr>
-        <tr>
-          <th>Last Name:</th>
-          <td id='lname'></td>
-        </tr>
-        <tr>
-          <th>Gender:</th>
-          <td id='gender'></td>
-        </tr>
-        <tr>
-          <th>Date of Birth:</th>
-          <td id='birthdate'></td>
-        </tr>
-      </table>
-      <h2>Observation Resource</h2>
-      <table>
-        <tr>
-          <th>Height:</th>
-          <td id='height'></td>
-        </tr>
-        <tr>
-          <th>Weight:</th>
-          <td id='weight'></td>
-        </tr>
-        <tr>
-          <th>BMI:</th>
-          <td id='bmi'></td>
-        </tr>
-        <tr>
-          <th>Temperature:</th>
-          <td id='temperature'></td>
-        </tr>
-        <tr>
-          <th>Heart Rate:</th>
-          <td id='heartrate'></td>
-        </tr>
-        <tr>
-          <th>Blood Glucose:</th>
-          <td id='glucose'></td>
-        </tr>
-        <tr>
-          <th>Systolic Blood Pressure:</th>
-          <td id='systolicbp'></td>
-        </tr>
-        <tr>
-          <th>Diastolic Blood Pressure:</th>
-          <td id='diastolicbp'></td>
-        </tr>
-        <tr>
-          <th>LDL:</th>
-          <td id='ldl'></td>
-        </tr>
-        <tr>
-          <th>HDL:</th>
-          <td id='hdl'></td>
-        </tr>
-      </table>
+        <h3>Observations</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-body">
+                <h4>Vital Signs</h4>
+                <p>Height: <span id="height"></span></p>
+                <p>Weight: <span id="weight"></span></p>
+                <p>BMI: <span id="bmi"></span></p>
+                <p>Blood Pressure: <span id="bp"></span></p>
+                <p>Heart Rate: <span id="heartrate"></span></p>
+                <p>Temperature: <span id="temperature"></span></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-body">
+                <h4>Lab Results</h4>
+                <p>Glucose: <span id="glucose"></span></p>
+                <p>HDL: <span id="hdl"></span></p>
+                <p>LDL: <span id="ldl"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Application-level javascript-->
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src='./src/js/example-smart-app.js'></script>
+    <!-- FHIR Client -->
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
     <script>
-      window.onload = function() {
-        if (window.FHIR) {
-          extractData().then(
-            function(p) {
-              drawVisualization(p);
-            },
-            function(error) {
-              $('#loading').hide();
-              $('#errors').html('<p>Failed to call FHIR Service: ' + error.message + '</p>');
-            }
-          );
-        } else {
-          $('#loading').hide();
-          $('#errors').html('<p>Error: FHIR client failed to load</p>');
+      // Modern async FHIR client initialization
+      async function init() {
+        try {
+          const client = await FHIR.oauth2.ready();
+          const patient = await client.patient.read();
+          
+          // Get observations
+          const observations = await client.patient.request(`Observation?${new URLSearchParams({
+            code: [
+              'http://loinc.org|8302-2',   // Height
+              'http://loinc.org|8462-4',   // Diastolic BP
+              'http://loinc.org|8480-6',   // Systolic BP
+              'http://loinc.org|2085-9',   // HDL
+              'http://loinc.org|2089-1',   // LDL
+              'http://loinc.org|55284-4',  // BP
+              'http://loinc.org|29463-7',  // Weight
+              'http://loinc.org|39156-5',  // BMI
+              'http://loinc.org|8310-5',   // Temperature
+              'http://loinc.org|8867-4',   // Heart rate
+              'http://loinc.org|2339-0'    // Glucose
+            ].join(',')
+          })}`);
+
+          displayPatient(patient);
+          displayObservations(observations);
+
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('patient-data').classList.remove('hidden');
+        } catch (error) {
+          console.error('Error:', error);
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('errors').classList.remove('hidden');
+          document.getElementById('errors').textContent = `Error: ${error.message}`;
         }
-      };
+      }
+
+      function displayPatient(patient) {
+        document.getElementById('name').textContent = `${patient.name?.[0]?.given?.join(' ') || ''} ${patient.name?.[0]?.family || ''}`;
+        document.getElementById('gender').textContent = patient.gender || 'Unknown';
+        document.getElementById('dob').textContent = patient.birthDate || 'Unknown';
+      }
+
+      function displayObservations(observations) {
+        const getObservationByCode = (code) => {
+          return observations.entry?.find(entry => 
+            entry.resource.code.coding.some(coding => coding.code === code)
+          )?.resource;
+        };
+
+        const getQuantityDisplay = (observation) => {
+          if (!observation?.valueQuantity) return 'Not available';
+          return `${observation.valueQuantity.value} ${observation.valueQuantity.unit || ''}`;
+        };
+
+        // Display vital signs
+        document.getElementById('height').textContent = getQuantityDisplay(getObservationByCode('8302-2'));
+        document.getElementById('weight').textContent = getQuantityDisplay(getObservationByCode('29463-7'));
+        document.getElementById('bmi').textContent = getQuantityDisplay(getObservationByCode('39156-5'));
+        document.getElementById('temperature').textContent = getQuantityDisplay(getObservationByCode('8310-5'));
+        document.getElementById('heartrate').textContent = getQuantityDisplay(getObservationByCode('8867-4'));
+
+        // Handle blood pressure (systolic/diastolic)
+        const bp = getObservationByCode('55284-4');
+        if (bp?.component) {
+          const systolic = bp.component.find(c => c.code.coding.some(coding => coding.code === '8480-6'))?.valueQuantity;
+          const diastolic = bp.component.find(c => c.code.coding.some(coding => coding.code === '8462-4'))?.valueQuantity;
+          document.getElementById('bp').textContent = systolic && diastolic ? 
+            `${systolic.value}/${diastolic.value} ${systolic.unit || ''}` : 
+            'Not available';
+        }
+
+        // Display lab results
+        document.getElementById('glucose').textContent = getQuantityDisplay(getObservationByCode('2339-0'));
+        document.getElementById('hdl').textContent = getQuantityDisplay(getObservationByCode('2085-9'));
+        document.getElementById('ldl').textContent = getQuantityDisplay(getObservationByCode('2089-1'));
+      }
+
+      // Initialize the application
+      init();
     </script>
   </body>
 </html>
