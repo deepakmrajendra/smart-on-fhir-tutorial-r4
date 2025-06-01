@@ -6,7 +6,7 @@
       
       if (client.patient) {
         // Get patient resource
-        const patient = await client.patient.read();
+        const patient = await client.request(`Patient/${client.patient.id}`);
         
         // Get observations using R4 syntax
         const queryParams = new URLSearchParams();
