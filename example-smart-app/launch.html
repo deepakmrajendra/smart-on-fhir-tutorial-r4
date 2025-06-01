@@ -10,7 +10,7 @@
   <body>
     <div id="loading">Loading...</div>
     <script>
-      // Get launch context and iss parameter from URL
+      // Get launch context from URL
       const queryParams = new URLSearchParams(window.location.search);
       const launchParam = queryParams.get('launch');
       const issParam = queryParams.get('iss');
@@ -18,12 +18,15 @@
       if (!launchParam || !issParam) {
         document.getElementById('loading').innerHTML = 'Error: Missing launch context or iss parameter';
       } else {
+        // Use minimal required scopes for R4
         FHIR.oauth2.authorize({
           clientId: '9f803871-8fb9-4363-a802-d6d00a0dc2e8',
-          scope: 'launch online_access openid profile patient/Patient.read patient/Observation.read',
+          // Minimal required scopes for R4
+          scope: 'launch openid fhirUser patient/Patient.read patient/Observation.read',
           redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
           launch: launchParam,
-          iss: issParam
+          iss: issParam,
+          completeInTarget: true
         }).catch(error => {
           console.error('Authorization Error:', error);
           document.getElementById('loading').innerHTML = `Error: ${error.message}`;
