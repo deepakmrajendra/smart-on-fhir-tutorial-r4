@@ -81,19 +81,26 @@
     </div>
 
     <!-- Application-level javascript-->
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src='./src/js/example-smart-app.js'></script>
     <script>
-      extractData().then(
-        function(p) {
-          drawVisualization(p);
-        },
-        function(error) {
+      window.onload = function() {
+        if (window.FHIR) {
+          extractData().then(
+            function(p) {
+              drawVisualization(p);
+            },
+            function(error) {
+              $('#loading').hide();
+              $('#errors').html('<p>Failed to call FHIR Service: ' + error.message + '</p>');
+            }
+          );
+        } else {
           $('#loading').hide();
-          $('#errors').html('<p>Failed to call FHIR Service: ' + error.message + '</p>');
+          $('#errors').html('<p>Error: FHIR client failed to load</p>');
         }
-      );
+      };
     </script>
   </body>
 </html>

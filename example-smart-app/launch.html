@@ -4,33 +4,33 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel='stylesheet' type='text/css' href='./src/css/example-smart-app.css'>
-    <!--
-      Temporarily disable cerner-smart-embeddable-lib
-      <link rel='stylesheet' type='text/css' href='./lib/css/cerner-smart-embeddable-lib-1.0.0.min.css'>
-    -->
     <title>Example-SMART-App</title>
   </head>
   <body>
-    <!-- Required JS files to enable this page to embed within an MPage -->
-    <!--
-      Temporarily disable cerner-smart-embeddable-lib
-      <script src='https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js'></script>
-      <script src='./lib/js/cerner-smart-embeddable-lib-1.0.0.min.js'></script>
-    -->
 
-    <!-- FHIR Client from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
-    <script>
-      FHIR.oauth2.authorize({
-        'client_id': '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
-        'scope': 'patient/Patient.read patient/Observation.read launch online_access openid profile',
-        'redirectUri': 'index.html'
-      });
-    </script>
     <div class="spinner">
       <div class="bounce1"></div>
       <div class="bounce2"></div>
       <div class="bounce3"></div>
     </div>
+
+    <!-- FHIR Client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.min.js"></script>
+    <script>
+      // Wait for the FHIR client to be loaded
+      window.onload = function() {
+        if (window.FHIR) {
+          FHIR.oauth2.authorize({
+            'client_id': '6cdc1adf-05e9-4179-bbff-cb9eeb163a9a',
+            'scope': 'patient/Patient.read patient/Observation.read launch online_access openid profile',
+            'redirectUri': 'index.html',
+            'completeInTarget': true
+          });
+        } else {
+          console.error('FHIR client not loaded');
+          document.body.innerHTML += '<p style="color: red;">Error: FHIR client failed to load</p>';
+        }
+      };
+    </script>
   </body>
 </html>
