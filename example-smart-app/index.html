@@ -78,13 +78,23 @@
         try {
           // Initialize SMART client
           const smart = await FHIR.oauth2.ready();
+
+          console.log('Access token:', smart.state.tokenResponse.access_token);
+          console.log('Scopes:', smart.state.tokenResponse.scope);
+          console.log('Patient ID:', smart.patient.id);
+          console.log('Patient Name:', smart.patient.name);
+          console.log('Patient Gender:', smart.patient.gender);
+          console.log('Patient Birth Date:', smart.patient.birthDate);
           
           // Get patient context
-          const patient = await smart.patient.read();
+          //const patient = await smart.patient.read();
           
+          const patientId = smart.patient.id;
+          const patient = await smart.request(`Patient/${patientId}`);
+
           // Build observation query
           const query = new URLSearchParams();
-          query.set('patient', patient.id);
+          query.set('patient', patientId);
           query.set('code', Object.values(CODES).join(','));
           
           // Fetch observations with proper error handling
@@ -106,19 +116,15 @@
           console.error('Error:', error);
           const errorDiv = document.getElementById('errors');
           errorDiv.classList.remove('hidden');
-          errorDiv.textContent = `Error: ${error.message}. ${error.stack ? '\n' + error.stack : ''}`;
+          errorDiv.textContent = `Error: ${error.message}`;
           document.getElementById('loading').classList.add('hidden');
         }
       }
 
       function displayPatient(patient) {
-        if (!patient) return;
-        
         const name = patient.name?.[0];
-        const nameText = name ? 
-          `${name.given?.join(' ') || ''} ${name.family || ''}`.trim() : 
-          'Unknown';
-        
+        const nameText = name ? `${name.given?.join(' ') || ''} ${name.family || ''}`.trim() : 'Unknown';
+
         document.getElementById('name').textContent = nameText;
         document.getElementById('gender').textContent = patient.gender || 'Unknown';
         document.getElementById('dob').textContent = patient.birthDate || 'Unknown';
@@ -147,17 +153,16 @@
         // Handle blood pressure (systolic/diastolic)
         const bp = getObservationByCode(CODES.bp);
         if (bp?.component) {
-          const systolic = bp.component.find(c => 
+          const systolic = bp.component.find(c =>
             c.code?.coding?.some(coding => coding.code === CODES.systolicBP)
           )?.valueQuantity;
-          
-          const diastolic = bp.component.find(c => 
+
+          const diastolic = bp.component.find(c =>
             c.code?.coding?.some(coding => coding.code === CODES.diastolicBP)
           )?.valueQuantity;
 
-          document.getElementById('bp').textContent = systolic && diastolic ? 
-            `${systolic.value}/${diastolic.value} ${systolic.unit || ''}`.trim() : 
-            'Not available';
+          document.getElementById('bp').textContent = systolic && diastolic ?
+            `${systolic.value}/${diastolic.value} ${systolic.unit || ''}`.trim() : 'Not available';
         } else {
           document.getElementById('bp').textContent = 'Not available';
         }
