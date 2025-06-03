@@ -88,6 +88,7 @@
           
           // Get patient context
           const patient = await smart.patient.read();
+          console.log('Fetched patient:', patient);
           
           // const patientId = smart.patient.id;
           // const patient = await smart.request(`Patient/${patientId}`);
