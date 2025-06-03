@@ -58,44 +58,68 @@
     <!-- FHIR Client -->
     <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
     <script>
+      // LOINC code mapping
+      const CODES = {
+        height: '8302-2',
+        diastolicBP: '8462-4',
+        systolicBP: '8480-6',
+        hdl: '2085-9',
+        ldl: '2089-1',
+        bp: '55284-4',
+        weight: '29463-7',
+        bmi: '39156-5',
+        temperature: '8310-5',
+        heartRate: '8867-4',
+        glucose: '2339-0'
+      };
+
       // Modern async FHIR client initialization
       async function init() {
         try {
-          const client = await FHIR.oauth2.ready();
-          const patient = await client.patient.read();
+          // Initialize SMART client
+          const smart = await FHIR.oauth2.ready();
           
-          // Get observations
-          const observations = await client.patient.request(`Observation?${new URLSearchParams({
-            code: [
-              'http://loinc.org|8302-2',   // Height
-              'http://loinc.org|8462-4',   // Diastolic BP
-              'http://loinc.org|8480-6',   // Systolic BP
-              'http://loinc.org|2085-9',   // HDL
-              'http://loinc.org|2089-1',   // LDL
-              'http://loinc.org|55284-4',  // BP
-              'http://loinc.org|29463-7',  // Weight
-              'http://loinc.org|39156-5',  // BMI
-              'http://loinc.org|8310-5',   // Temperature
-              'http://loinc.org|8867-4',   // Heart rate
-              'http://loinc.org|2339-0'    // Glucose
-            ].join(',')
-          })}`);
+          // Get patient context
+          const patient = await smart.patient.read();
+          
+          // Build observation query
+          const query = new URLSearchParams();
+          query.set('patient', patient.id);
+          query.set('code', Object.values(CODES).join(','));
+          
+          // Fetch observations with proper error handling
+          const observations = await smart.request(`Observation?${query}`);
+          
+          if (!observations || !observations.entry) {
+            throw new Error('No observations found');
+          }
 
+          // Display data
           displayPatient(patient);
           displayObservations(observations);
 
+          // Show content
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('patient-data').classList.remove('hidden');
+          
         } catch (error) {
           console.error('Error:', error);
+          const errorDiv = document.getElementById('errors');
+          errorDiv.classList.remove('hidden');
+          errorDiv.textContent = `Error: ${error.message}. ${error.stack ? '\n' + error.stack : ''}`;
           document.getElementById('loading').classList.add('hidden');
-          document.getElementById('errors').classList.remove('hidden');
-          document.getElementById('errors').textContent = `Error: ${error.message}`;
         }
       }
 
       function displayPatient(patient) {
-        document.getElementById('name').textContent = `${patient.name?.[0]?.given?.join(' ') || ''} ${patient.name?.[0]?.family || ''}`;
+        if (!patient) return;
+        
+        const name = patient.name?.[0];
+        const nameText = name ? 
+          `${name.given?.join(' ') || ''} ${name.family || ''}`.trim() : 
+          'Unknown';
+        
+        document.getElementById('name').textContent = nameText;
         document.getElementById('gender').textContent = patient.gender || 'Unknown';
         document.getElementById('dob').textContent = patient.birthDate || 'Unknown';
       }
@@ -103,36 +127,45 @@
       function displayObservations(observations) {
         const getObservationByCode = (code) => {
           return observations.entry?.find(entry => 
-            entry.resource.code.coding.some(coding => coding.code === code)
+            entry.resource?.code?.coding?.some(coding => coding.code === code)
           )?.resource;
         };
 
         const getQuantityDisplay = (observation) => {
           if (!observation?.valueQuantity) return 'Not available';
-          return `${observation.valueQuantity.value} ${observation.valueQuantity.unit || ''}`;
+          const { value, unit } = observation.valueQuantity;
+          return `${value} ${unit || ''}`.trim();
         };
 
         // Display vital signs
-        document.getElementById('height').textContent = getQuantityDisplay(getObservationByCode('8302-2'));
-        document.getElementById('weight').textContent = getQuantityDisplay(getObservationByCode('29463-7'));
-        document.getElementById('bmi').textContent = getQuantityDisplay(getObservationByCode('39156-5'));
-        document.getElementById('temperature').textContent = getQuantityDisplay(getObservationByCode('8310-5'));
-        document.getElementById('heartrate').textContent = getQuantityDisplay(getObservationByCode('8867-4'));
+        document.getElementById('height').textContent = getQuantityDisplay(getObservationByCode(CODES.height));
+        document.getElementById('weight').textContent = getQuantityDisplay(getObservationByCode(CODES.weight));
+        document.getElementById('bmi').textContent = getQuantityDisplay(getObservationByCode(CODES.bmi));
+        document.getElementById('temperature').textContent = getQuantityDisplay(getObservationByCode(CODES.temperature));
+        document.getElementById('heartrate').textContent = getQuantityDisplay(getObservationByCode(CODES.heartRate));
 
         // Handle blood pressure (systolic/diastolic)
-        const bp = getObservationByCode('55284-4');
+        const bp = getObservationByCode(CODES.bp);
         if (bp?.component) {
-          const systolic = bp.component.find(c => c.code.coding.some(coding => coding.code === '8480-6'))?.valueQuantity;
-          const diastolic = bp.component.find(c => c.code.coding.some(coding => coding.code === '8462-4'))?.valueQuantity;
+          const systolic = bp.component.find(c => 
+            c.code?.coding?.some(coding => coding.code === CODES.systolicBP)
+          )?.valueQuantity;
+          
+          const diastolic = bp.component.find(c => 
+            c.code?.coding?.some(coding => coding.code === CODES.diastolicBP)
+          )?.valueQuantity;
+
           document.getElementById('bp').textContent = systolic && diastolic ? 
-            `${systolic.value}/${diastolic.value} ${systolic.unit || ''}` : 
+            `${systolic.value}/${diastolic.value} ${systolic.unit || ''}`.trim() : 
             'Not available';
+        } else {
+          document.getElementById('bp').textContent = 'Not available';
         }
 
         // Display lab results
-        document.getElementById('glucose').textContent = getQuantityDisplay(getObservationByCode('2339-0'));
-        document.getElementById('hdl').textContent = getQuantityDisplay(getObservationByCode('2085-9'));
-        document.getElementById('ldl').textContent = getQuantityDisplay(getObservationByCode('2089-1'));
+        document.getElementById('glucose').textContent = getQuantityDisplay(getObservationByCode(CODES.glucose));
+        document.getElementById('hdl').textContent = getQuantityDisplay(getObservationByCode(CODES.hdl));
+        document.getElementById('ldl').textContent = getQuantityDisplay(getObservationByCode(CODES.ldl));
       }
 
       // Initialize the application
