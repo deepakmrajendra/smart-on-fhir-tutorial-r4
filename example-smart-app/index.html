@@ -87,14 +87,15 @@
           console.log('Patient Birth Date:', smart.patient.birthDate);
           
           // Get patient context
-          //const patient = await smart.patient.read();
+          const patient = await smart.patient.read();
           
-          const patientId = smart.patient.id;
-          const patient = await smart.request(`Patient/${patientId}`);
+          // const patientId = smart.patient.id;
+          // const patient = await smart.request(`Patient/${patientId}`);
 
           // Build observation query
           const query = new URLSearchParams();
-          query.set('patient', patientId);
+          query.set('patient', smart.patient.id);
+          // query.set('patient', patientId);
           query.set('code', Object.values(CODES).join(','));
           
           // Fetch observations with proper error handling
