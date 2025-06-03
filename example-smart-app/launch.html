@@ -21,8 +21,8 @@
         // Use minimal required scopes for R4
         FHIR.oauth2.authorize({
           clientId: '9f803871-8fb9-4363-a802-d6d00a0dc2e8',
-          // Minimal required scopes for R4
-          scope: 'launch openid fhirUser patient/Patient.rs patient/Observation.rs',
+          // Correct R4 scope format
+          scope: 'launch openid fhirUser online_access patient/Patient.* patient/Observation.*',
           redirectUri: 'https://deepakmrajendra.github.io/smart-on-fhir-tutorial-r4/example-smart-app/',
           launch: launchParam,
           iss: issParam,
